@@ -42,7 +42,7 @@ class GroupModelTest(TestCase):
 
     def test_group_models_have_correct_object_names(self):
         """Проверяем корректное имя группы."""
-        
+
         group = GroupModelTest.group
         expected_object_name = group.title
         self.assertEqual(expected_object_name, str(group))
