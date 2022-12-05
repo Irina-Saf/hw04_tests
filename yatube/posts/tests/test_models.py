@@ -24,7 +24,7 @@ class PostModelTest(TestCase):
         """Проверяем корректное имя поста."""
 
         post = PostModelTest.post
-        expected_object_name = post.text[:15]
+        expected_object_name = post.text[:POST_TITLE_LENGHT]
         self.assertEqual(str(post), expected_object_name)
 
 

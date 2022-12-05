@@ -58,7 +58,7 @@ class PostPagesTests(TestCase):
         page_obj = response.context["page_obj"]
 
         self.assertIn(self.post, page_obj)
-        self.assertLessEqual(len(page_obj), LIMIT_POST)
+        self.assertEqual(len(page_obj), len(Post.objects.all()[:LIMIT_POST]))
 
     def test_group_list_pages_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
@@ -68,7 +68,7 @@ class PostPagesTests(TestCase):
             slug='test-slug-2',
             description='Тест описание группы 2'
         )
-        self.post = Post.objects.create(
+        self.post_two = Post.objects.create(
             text='Тест текст поста 2',
             author=self.user,
             group=self.group_two,
@@ -76,14 +76,15 @@ class PostPagesTests(TestCase):
 
         response = self.authorized_client.get(
             reverse("posts:group_list", kwargs=(
-                {"slug": f"{PostPagesTests.group.slug}"}
+                {"slug": f"{self.group.slug}"}
             )))
 
         group = response.context["group"]
-        self.assertEqual(response.context["group"], PostPagesTests.group)
-        posts = response.context["page_obj"]
+        self.assertEqual(response.context["group"], self.group)
+        page_obj = response.context["page_obj"]
+        self.assertIn(self.post, page_obj)
 
-        for post in posts:
+        for post in page_obj:
             self.assertEqual(post.group, group)
 
     def test_profile_pages_show_correct_context(self):
@@ -95,8 +96,9 @@ class PostPagesTests(TestCase):
 
         author = response.context["author"]
         self.assertEqual(author, PostPagesTests.user)
-        posts = response.context["page_obj"]
-        for post in posts:
+        page_obj = response.context["page_obj"]
+        self.assertIn(self.post, page_obj)
+        for post in page_obj:
             self.assertEqual(post.author, author)
 
     def test_post_detail_pages_show_correct_context(self):
@@ -114,7 +116,7 @@ class PostPagesTests(TestCase):
         response = (self.authorized_client.get(reverse(
             'posts:post_edit', kwargs={'post_id': self.post.id})))
 
-        self.assertEqual(response.context["is_edit"], True)
+        self.assertTrue(response.context["is_edit"])
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
@@ -130,7 +132,7 @@ class PostPagesTests(TestCase):
         response = self.authorized_client.get(reverse(
             'posts:post_create'))
 
-        self.assertEqual(response.context["is_edit"], False)
+        self.assertFalse(response.context["is_edit"])
 
         form_fields = {
             'text': forms.fields.CharField,
@@ -160,7 +162,7 @@ class PaginatorViewsTest(TestCase):
                 author=cls.user,
                 group=cls.group
             )
-            for i in range(0, MAX_POST)]
+            for i in range(MAX_POST)]
         Post.objects.bulk_create(objs_post)
 
     def test_first_page_contains(self):
@@ -179,7 +181,7 @@ class PaginatorViewsTest(TestCase):
         }
         for value, expected in url_names.items():
             with self.subTest(value=value):
-                response = self.client.get(value + '?page=1')
+                response = self.client.get(f'{value}?page=1')
                 self.assertEqual(len(response.context['page_obj']), expected)
 
     def test_second_page_contains_three_records(self):
@@ -201,5 +203,5 @@ class PaginatorViewsTest(TestCase):
         }
         for value, expected in url_names.items():
             with self.subTest(value=value):
-                response = self.client.get(value + '?page=2')
+                response = self.client.get(f'{value}?page=2')
                 self.assertEqual(len(response.context['page_obj']), expected)

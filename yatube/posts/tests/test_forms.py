@@ -39,8 +39,7 @@ class PostFormTests(TestCase):
 
         for obj, answer in expect_answer.items():
             with self.subTest(obj=obj):
-                resp_context = obj
-                self.assertEqual(resp_context, answer)
+                self.assertEqual(obj, answer)
 
     def test_create_post_without_group(self):
         """Форма создает запись в Post. Без группы."""
@@ -58,8 +57,11 @@ class PostFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), post_count + 1)
 
-        self.assertEqual(Post.objects.order_by("-id")
-                         [0].text, form_data["text"])
+        self.assertTrue(
+            Post.objects.filter(
+                text=form_data["text"],
+                author=self.user
+            ).exists())
 
     def test_create_post_with_group(self):
         """Форма создает запись в Post. С группой."""
@@ -78,12 +80,12 @@ class PostFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), post_count + 1)
 
-        last_post = Post.objects.order_by("-id")[0]
-        expect_answer = {
-            last_post.group.id: form_data["group"],
-            last_post.text: form_data["text"],
-        }
-        self.cheking_context(expect_answer)
+        self.assertTrue(
+            Post.objects.filter(
+                text=form_data["text"],
+                group=form_data["group"],
+                author=self.user
+            ).exists())
 
     def test_create_post_with_guest(self):
         """Форма не создает запись в Post от гостя."""
@@ -121,6 +123,9 @@ class PostFormTests(TestCase):
         expect_answer = {
             post_new.id: post_change.id,
             post_new.text: post_change.text,
+            post_new.author: post_change.author,
+            post_new.pub_date: post_change.pub_date,
+            post_new.group: post_change.group,
         }
         self.cheking_context(expect_answer)
 
@@ -151,7 +156,10 @@ class PostFormTests(TestCase):
         post_change = Post.objects.get(id=post_new.id)
         expect_answer = {
             post_new.id: post_change.id,
-            form_data["text"]: post_change.text,
-            form_data["group"]: post_change.group.id,
+            post_new.text: post_change.text,
+            post_new.group: post_change.group,
+            post_new.author: post_change.author,
+            post_new.pub_date: post_change.pub_date,
+
         }
         self.cheking_context(expect_answer)

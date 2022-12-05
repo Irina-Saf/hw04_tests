@@ -68,15 +68,8 @@ class PostURLTests(TestCase):
     def test_404_url(self):
         """Проверяем, что статус ответа сервера - 404."""
 
-        response_url = {
-            self.guest_client: '/unexisting_page/',
-        }
-        for client, url in response_url.items():
-            with self.subTest(client=client):
-                response = client.get(url)
-                self.assertEqual(
-                    response.status_code, HTTPStatus.NOT_FOUND
-                )
+        response = self.guest_client.get('/unexisting_page/')
+        self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
 
     def test_urls_templates_no_auth(self):
         """Проверяем доступность шаблонов и доступа к страницам
