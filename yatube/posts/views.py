@@ -2,8 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import PostForm, CommentForm
-from .models import Group, Post, User, Comment
+from .forms import PostForm
+from .models import Group, Post, User
 
 VISIBLE_POSTCOUNT: int = 10
 
@@ -46,12 +46,8 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    comments = Comment.objects.filter(post_id__exact=post.pk)
     context = {
         'post': post,
-        "form": CommentForm(),
-        "comments": comments,
-
     }
     template = 'posts/post_detail.html'
 
@@ -61,10 +57,7 @@ def post_detail(request, post_id):
 @login_required
 def post_create(request):
 
-    form = PostForm(
-        request.POST or None,
-        files=request.FILES or None,
-    )
+    form = PostForm(request.POST or None)
 
     if form.is_valid():
         post = form.save(commit=False)
@@ -84,10 +77,7 @@ def post_edit(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     if post.author != request.user:
         return redirect('posts:post_detail', post_id)
-    form = PostForm(
-        request.POST or None,
-        files=request.FILES or None,
-        instance=post)
+    form = PostForm(request.POST or None, instance=post)
 
     if form.is_valid():
         form.save()
@@ -103,16 +93,3 @@ def paginator_page_obj(posts, request):
     paginator = Paginator(posts, VISIBLE_POSTCOUNT)
     page_number = request.GET.get('page')
     return paginator.get_page(page_number)
-
-
-@login_required
-def add_comment(request, post_id):
-
-    post = get_object_or_404(Post, pk=post_id)
-    form = CommentForm(request.POST or None)
-    if form.is_valid():
-        comment = form.save(commit=False)
-        comment.author = request.user
-        comment.post = post
-        comment.save()
-    return redirect('posts:post_detail', post_id=post_id)
