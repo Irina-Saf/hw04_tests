@@ -156,8 +156,8 @@ class PostFormTests(TestCase):
         post_change = Post.objects.get(id=post_new.id)
         expect_answer = {
             post_new.id: post_change.id,
-            post_new.text: post_change.text,
-            post_new.group: post_change.group,
+            form_data["text"]: post_change.text,
+            form_data["group"]: post_change.group.id,
             post_new.author: post_change.author,
             post_new.pub_date: post_change.pub_date,
 
